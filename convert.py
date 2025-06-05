@@ -13,6 +13,7 @@ import sys
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 from tqdm import tqdm
+from datetime import datetime
 
 ########## FUNCTIONS #########
 
@@ -186,7 +187,20 @@ def write_output(new_root, output_file, count):
     xml_str = ET.tostring(new_root, encoding="utf-8")
     parsed = minidom.parseString(xml_str)
     pretty_xml = parsed.toprettyxml(indent="    ")
+
     with open(output_file, "w", encoding="utf-8") as f:
+
+        # Write the XML header and comments for SMS Backup & Restore
+        f.write("<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>\n")
+        f.write("<!--File Created By SMS Backup & Restore v10.21.004 on ")
+        f.write(datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "-->\n")
+        f.write("<!--\n\nTo view this file in a more readable format, ")
+        f.write("visit https://synctech.com.au/view-backup/\n\n-->\n")
+
+        # Remove the XML declaration line if present from pretty_xml
+        pretty_xml_lines = pretty_xml.split("\n")
+        if pretty_xml_lines[0].startswith("<?xml"):
+            pretty_xml = "\n".join(pretty_xml_lines[1:])
         f.write(pretty_xml)
 
     print(f"Done. Total messages written: {count}")
