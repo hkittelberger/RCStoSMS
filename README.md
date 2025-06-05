@@ -13,8 +13,6 @@
     <br />
     <br />
     <br />
-    <a href="https://github.com/hkittelberger/RCStoSMS">View Demo</a>
-    &middot;
     <a href="https://github.com/hkittelberger/RCStoSMS/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
     &middot;
     <a href="https://github.com/hkittelberger/RCStoSMS/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
@@ -24,8 +22,6 @@
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
-
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
 
 When I was transfering over all my data from my Android to my new iPhone,
 I realized the andorid app MovetoIOS does not handle RCS messages. This
@@ -37,9 +33,6 @@ will not be converted and skipped. The script does handle group messages, but
 only to a certain extent. Due to how the text messages are downloaded from
 android, their formatting of the numbers can be inconsistent. There are no
 guarantees that the group messages will be converted correctly.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 
 <!-- GETTING STARTED -->
 ## Getting Started
@@ -67,6 +60,7 @@ iPhone using the MovetoIOS app.
 ## Usage
 
 Use the following command on the command line to run the script:
+(output_path is optional and defaults to "converted.xml")
 
 ```sh
 python3 convert.py <path_to_xml_file> [output_path]
