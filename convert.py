@@ -30,6 +30,56 @@ def strip_namespace(tag):
     
     return tag.split('}', 1)[-1] if '}' in tag else tag
 
+# extract_body_from_mms
+#
+# Purpose: Function to extract the text elem body from an MMS message
+# Parameters: The MMS element to parse
+# Returns: The text body as a string, or an empty string if not found
+# Expects: mms_element is a valid ElementTree element with "parts" child
+#
+def extract_body_from_mms(mms_element):
+    
+    # Get all the parts attributes from the message
+    for parts in mms_element.findall("parts"):
+        # only look at the parts with the text/plain type for the body
+        for part in parts.findall("part"):
+            if part.attrib.get("ct") == "text/plain":
+                return part.attrib.get("text", "")
+    return ""
+
+# get_basePhoneNum
+#
+# Purpose: Function to get the user's phone number
+# Parameters: The MMS element to parse
+# Returns: The base phone number as a string, or an empty string if not found
+# Expects: mms_element is a valid ElementTree element with "addrs" child
+#
+def get_basePhoneNum(mms_element):
+    addrs = mms_element.find("addrs")
+    if addrs is None:
+        return ""
+    for addr in addrs.findall("addr"):
+        if addr.attrib.get("type") == "137":
+            return addr.attrib.get("address", "")
+    return ""
+
+# handle_addresses
+#
+# Purpose: Get all the addresses including group chats
+# Parameters: The MMS element to parse
+# Returns: A string of unique addresses, or "unknown" if none found
+# Expects: mms_element is a valid ElementTree element with "addrs" child
+#
+def handle_addresses(mms_element):
+    unique_addresses = get_unique_addresses(mms_element)
+    address = ""
+
+    for addr in unique_addresses:
+        if(addr != get_basePhoneNum(mms_element)):
+            address += addr + ";"
+
+    return address[:-1] if address else "unknown"
+
 # get_unique_addresses
 #
 # Purpose: Function to extract unique addresses from an MMS element
@@ -54,23 +104,6 @@ def get_unique_addresses(mms_element):
     
     return unique_addresses
 
-# extract_body_from_mms
-#
-# Purpose: Function to extract the text elem body from an MMS message
-# Parameters: The MMS element to parse
-# Returns: The text body as a string, or an empty string if not found
-# Expects: mms_element is a valid ElementTree element with "parts" child
-#
-def extract_body_from_mms(mms_element):
-    
-    # Get all the parts attributes from the message
-    for parts in mms_element.findall("parts"):
-        # only look at the parts with the text/plain type for the body
-        for part in parts.findall("part"):
-            if part.attrib.get("ct") == "text/plain":
-                return part.attrib.get("text", "")
-    return ""
-
 # convert_mms_to_sms
 #
 # Purpose: Function to convert an MMS element to an SMS element so that all SMS
@@ -81,16 +114,18 @@ def extract_body_from_mms(mms_element):
 #          "read", etc.
 #
 def convert_mms_to_sms(mms_element):
-    address = mms_element.attrib.get("address", "unknown")
+
+    #get all the required attributes
+    address = handle_addresses(mms_element)
     date = mms_element.attrib.get("date", "0")
     read = mms_element.attrib.get("read", "1")
     sub_id = mms_element.attrib.get("sub_id", "1")
     contact_name = mms_element.attrib.get("contact_name", "")
     msg_box = mms_element.attrib.get("msg_box", "1")
     type_value = "1" if msg_box == "1" else "2"
-
     body = extract_body_from_mms(mms_element)
 
+    # make a new element using all the retrieved values
     return ET.Element("sms", {
         "protocol": "0",
         "address": address,
@@ -123,12 +158,6 @@ def process_messages(context, new_root, root):
         count = 0
         for event, elem in tqdm(context):
             if event == "end" and strip_namespace(elem.tag) == "mms":
-
-                # Skip group messages
-                unique_addresses = get_unique_addresses(elem)
-                if len(unique_addresses) > 2:
-                    root.clear()
-                    continue  
 
                 sms = convert_mms_to_sms(elem)
                 new_root.append(sms)
